@@ -2,11 +2,15 @@ import random
 import time
 import streamlit as st
 
-st.set_page_config(page_title="Đấu Trí Toán 8", page_icon="📐")
+st.set_page_config(page_title="Đấu Trí Toán 8 - Nâng Cao", page_icon="📐")
 
 
-# Hàm tạo câu hỏi Toán lớp 8 ngẫu nhiên
-def generate_question():
+# Hàm tạo câu hỏi Toán lớp 8 có độ khó tăng dần dựa vào điểm số
+def generate_question(score):
+  # Càng nhiều điểm, độ khó (level) càng tăng
+  level = min(5, 1 + score // 30)  # Level tối đa là 5
+
+  # Chọn loại câu hỏi ngẫu nhiên
   category = random.choice([
       "HangDangThuc",
       "DaThuc",
@@ -15,12 +19,11 @@ def generate_question():
   ])
 
   if category == "HangDangThuc":
-    # Câu hỏi về Hằng đẳng thức đáng nhớ
-    a = random.randint(2, 5)
-    b = random.randint(1, 9)
+    # Độ khó tăng theo level (số lớn hơn)
+    a = random.randint(1, level + 1)
+    b = random.randint(2, 5 * level)
     q_type = random.choice([1, 2])
     if q_type == 1:
-      # (x + b)^2
       question = f"Khai triển biểu thức: $(x + {b})^2$"
       correct = f"x^2 + {2*b}x + {b**2}"
       wrongs = [
@@ -29,7 +32,6 @@ def generate_question():
           f"x^2 - {2*b}x + {b**2}",
       ]
     else:
-      # (a*x - b)(a*x + b)
       question = f"Thu gọn biểu thức: $({a}x - {b})({a}x + {b})$"
       correct = f"{a**2}x^2 - {b**2}"
       wrongs = [
@@ -39,10 +41,9 @@ def generate_question():
       ]
 
   elif category == "DaThuc":
-    # Phép nhân đơn thức với đa thức
-    a = random.randint(2, 6)
-    b = random.randint(2, 7)
-    c = random.randint(1, 9)
+    a = random.randint(2, level + 2)
+    b = random.randint(2, level + 3)
+    c = random.randint(1, 5 * level)
     question = f"Rút gọn biểu thức: ${a}x({b}x - {c})$"
     correct = f"{a*b}x^2 - {a*c}x"
     wrongs = [
@@ -52,39 +53,29 @@ def generate_question():
     ]
 
   elif category == "PhuongTrinh":
-    # Giải phương trình bậc nhất 1 ẩn ax + b = c
-    x_val = random.randint(1, 10)
-    a = random.randint(2, 6)
-    b = random.randint(1, 15)
+    x_val = random.randint(1, 5 * level)
+    a = random.randint(2, level + 2)
+    b = random.randint(1, 10 * level)
     c = a * x_val + b
     question = f"Tìm $x$ biết: ${a}x + {b} = {c}$"
     correct = f"x = {x_val}"
     wrongs = [f"x = {x_val + 1}", f"x = {x_val - 1}", f"x = {x_val * 2}"]
 
   else:
-    # Hình học: Định lý Pythagoras
-    a = random.choice([3, 5, 6, 8, 9, 12])
-    b = random.choice([4, 12, 8, 15, 12, 16])
-    c_val = int((a**2 + b**2) ** 0.5)
-    if a**2 + b**2 == c_val**2:
-      question = (
-          f"Cho $\\triangle ABC$ vuông tại $A$ có $AB = {a}\\text{{ cm}}$, $AC ="
-          f" {b}\\text{{ cm}}$. Độ dài $BC$ là:"
-      )
-      correct = f"{c_val} cm"
-      wrongs = [f"{c_val + 2} cm", f"{c_val - 1} cm", f"{a + b} cm"]
-    else:
-      question = "Trong một tam giác vuông, bình phương cạnh huyền bằng:"
-      correct = "Tổng bình phương hai cạnh góc vuông"
-      wrongs = [
-          "Tích hai cạnh góc vuông",
-          "Hiệu bình phương hai cạnh góc vuông",
-          "Tổng hai cạnh góc vuông",
-      ]
+    # Hình học Py-ta-go với các bộ số mở rộng dần
+    triplets = [(3, 4, 5), (6, 8, 10), (5, 12, 13), (9, 12, 15), (8, 15, 17)]
+    chosen = random.choice(triplets[: max(2, level + 1)] )
+    a, b, c_val = chosen[0], chosen[1], chosen[2]
+    question = (
+        f"Cho $\\triangle ABC$ vuông tại $A$ có $AB = {a}\\text{{ cm}}$, $AC ="
+        f" {b}\\text{{ cm}}$. Độ dài cạnh huyền $BC$ là:"
+    )
+    correct = f"{c_val} cm"
+    wrongs = [f"{c_val + 2} cm", f"{c_val - 1} cm", f"{a + b} cm"]
 
   options = [correct] + wrongs
   random.shuffle(options)
-  return question, correct, options
+  return question, correct, options, level
 
 
 # Khởi tạo trạng thái ứng dụng
@@ -92,26 +83,35 @@ if "score" not in st.session_state:
   st.session_state.score = 0
 if "high_score" not in st.session_state:
   st.session_state.high_score = 0
-if "current_q" not in st.session_state:
-  st.session_state.current_q = generate_question()
+if "current_data" not in st.session_state:
+  # Trả về: question, correct_ans, options, level
+  st.session_state.current_data = generate_question(st.session_state.score)
 if "game_over" not in st.session_state:
   st.session_state.game_over = False
 
 # Giao diện chính
-st.title("📐 Game Đấu Trí Toán Lớp 8")
-st.write("Hãy kiểm tra kiến thức Toán 8 của bạn bằng cách trả lời các câu hỏi!")
+st.title("📐 Game Đấu Trí Toán 8 (Cấp Độ Tăng Dần)")
+st.write(
+    "Càng trả lời đúng nhiều, cấp độ càng cao và thời gian trả lời càng bị"
+    " siết chặt!"
+)
 
-# Hiển thị điểm số
-col1, col2 = st.columns(2)
+# Hiển thị điểm số và cấp độ hiện tại
+q_text, correct_ans, options, current_level = st.session_state.current_data
+
+col1, col2, col3 = st.columns(3)
 col1.metric("Điểm hiện tại", st.session_state.score)
-col2.metric("Kỷ lục", st.session_state.high_score)
+col2.metric("Cấp độ (Level)", f"Lv. {current_level}")
+col3.metric("Kỷ lục", st.session_state.high_score)
 
 st.divider()
 
 if not st.session_state.game_over:
-  q_text, correct_ans, options = st.session_state.current_q
-
   st.subheader(q_text)
+
+  # Thời gian giới hạn giảm dần theo cấp độ (Lv1: 20s, Lv5: 10s)
+  time_limit = max(10, 22 - (current_level * 2))
+  st.info(f"⏱️ Thời gian suy nghĩ cho câu này: khoảng {time_limit} giây.")
 
   # Form chọn đáp án
   with st.form(key="quiz_form"):
@@ -120,12 +120,17 @@ if not st.session_state.game_over:
 
   if submit:
     if user_choice == correct_ans:
-      st.success("🎉 Chính xác! Bạn được +10 điểm.")
-      st.session_state.score += 10
+      bonus_points = 10 * current_level
+      st.success(
+          f"🎉 Chính xác! Bạn nhận được +{bonus_points} điểm (Thưởng cấp"
+          f" độ)."
+      )
+      st.session_state.score += bonus_points
       if st.session_state.score > st.session_state.high_score:
         st.session_state.high_score = st.session_state.score
-      # Chuyển câu tiếp theo
-      st.session_state.current_q = generate_question()
+
+      # Tạo câu hỏi mới với điểm số đã tăng
+      st.session_state.current_data = generate_question(st.session_state.score)
       time.sleep(1)
       st.rerun()
     else:
@@ -134,9 +139,9 @@ if not st.session_state.game_over:
 
 else:
   st.warning("🎮 Game Over! Bạn đã chọn sai đáp án.")
-  st.write(f"Tổng điểm của bạn là: **{st.session_state.score} điểm**")
+  st.write(f"Tổng số điểm bạn đạt được là: **{st.session_state.score} điểm**")
   if st.button("Chơi lại từ đầu"):
     st.session_state.score = 0
     st.session_state.game_over = False
-    st.session_state.current_q = generate_question()
+    st.session_state.current_data = generate_question(st.session_state.score)
     st.rerun()
