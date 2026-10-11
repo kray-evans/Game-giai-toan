@@ -2,15 +2,34 @@ import random
 import time
 import streamlit as st
 
-st.set_page_config(page_title="Đấu Trí Toán 8 - Nâng Cao", page_icon="📐")
+# Cấu hình trang gọn gàng
+st.set_page_config(
+    page_title="Đấu Trí Toán 8", page_icon="📐", layout="centered"
+)
+
+# Giao diện CSS tùy chỉnh để làm đẹp form và nút bấm
+st.markdown(
+    """
+    <style>
+    .stButton>button {
+        width: 100%;
+        border-radius: 8px;
+        font-weight: bold;
+        height: 45px;
+    }
+    .stRadio>label {
+        font-weight: 600;
+        font-size: 16px;
+    }
+    </style>
+""",
+    unsafe_allow_html=True,
+)
 
 
-# Hàm tạo câu hỏi Toán lớp 8 có độ khó tăng dần dựa vào điểm số
+# Hàm tạo câu hỏi Toán lớp 8 tăng độ khó theo điểm
 def generate_question(score):
-  # Càng nhiều điểm, độ khó (level) càng tăng
-  level = min(5, 1 + score // 30)  # Level tối đa là 5
-
-  # Chọn loại câu hỏi ngẫu nhiên
+  level = min(5, 1 + score // 30)
   category = random.choice([
       "HangDangThuc",
       "DaThuc",
@@ -19,7 +38,6 @@ def generate_question(score):
   ])
 
   if category == "HangDangThuc":
-    # Độ khó tăng theo level (số lớn hơn)
     a = random.randint(1, level + 1)
     b = random.randint(2, 5 * level)
     q_type = random.choice([1, 2])
@@ -62,12 +80,11 @@ def generate_question(score):
     wrongs = [f"x = {x_val + 1}", f"x = {x_val - 1}", f"x = {x_val * 2}"]
 
   else:
-    # Hình học Py-ta-go với các bộ số mở rộng dần
     triplets = [(3, 4, 5), (6, 8, 10), (5, 12, 13), (9, 12, 15), (8, 15, 17)]
-    chosen = random.choice(triplets[: max(2, level + 1)] )
+    chosen = random.choice(triplets[: max(2, level + 1)])
     a, b, c_val = chosen[0], chosen[1], chosen[2]
     question = (
-        f"Cho $\\triangle ABC$ vuông tại $A$ có $AB = {a}\\text{{ cm}}$, $AC ="
+        f"Cho $\\triangle ABC$ vuông tại $A$ có $AB = {a}\\text{{ cm}}$,$AC ="
         f" {b}\\text{{ cm}}$. Độ dài cạnh huyền $BC$ là:"
     )
     correct = f"{c_val} cm"
@@ -78,30 +95,30 @@ def generate_question(score):
   return question, correct, options, level
 
 
-# Khởi tạo trạng thái ứng dụng
+# Khởi tạo trạng thái game
 if "score" not in st.session_state:
   st.session_state.score = 0
 if "high_score" not in st.session_state:
   st.session_state.high_score = 0
 if "current_data" not in st.session_state:
-  # Trả về: question, correct_ans, options, level
   st.session_state.current_data = generate_question(st.session_state.score)
 if "game_over" not in st.session_state:
   st.session_state.game_over = False
+if "start_time" not in st.session_state:
+  st.session_state.start_time = time.time()
 
-# Giao diện chính
-st.title("📐 Game Đấu Trí Toán 8 (Cấp Độ Tăng Dần)")
-st.write(
-    "Càng trả lời đúng nhiều, cấp độ càng cao và thời gian trả lời càng bị"
-    " siết chặt!"
-)
+# --- TIÊU ĐỀ GỌN GÀNG ---
+st.title("📐 Đấu Trí Toán 8")
+st.markdown("*Chinh phục toán học – Càng chơi càng khó!*")
+st.divider()
 
-# Hiển thị điểm số và cấp độ hiện tại
+# --- KHU VỰC HIỂN THỊ CHỈ SỐ (METRICS) ---
 q_text, correct_ans, options, current_level = st.session_state.current_data
 
 col1, col2, col3 = st.columns(3)
-col1.metric("Điểm hiện tại", st.session_state.score)
-col2.metric("Cấp độ (Level)", f"Lv. {current_level}")
+col1.metric("🏆 Điểm",
+
+vel}")
 col3.metric("Kỷ lục", st.session_state.high_score)
 
 st.divider()
