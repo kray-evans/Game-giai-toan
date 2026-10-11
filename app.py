@@ -7,7 +7,7 @@ st.set_page_config(
     page_title="Đấu Trí Toán 8", page_icon="📐", layout="centered"
 )
 
-# Giao diện CSS tùy chỉnh để làm đẹp form và nút bấm
+# Giao diện CSS tùy chỉnh
 st.markdown(
     """
     <style>
@@ -84,7 +84,7 @@ def generate_question(score):
     chosen = random.choice(triplets[: max(2, level + 1)])
     a, b, c_val = chosen[0], chosen[1], chosen[2]
     question = (
-        f"Cho $\\triangle ABC$ vuông tại $A$ có $AB = {a}\\text{{ cm}}$,$AC ="
+        f"Cho $\\triangle ABC$ vuông tại $A$ có $AB = {a}\\text{{ cm}}$, $AC ="
         f" {b}\\text{{ cm}}$. Độ dài cạnh huyền $BC$ là:"
     )
     correct = f"{c_val} cm"
@@ -112,53 +112,57 @@ st.title("📐 Đấu Trí Toán 8")
 st.markdown("*Chinh phục toán học – Càng chơi càng khó!*")
 st.divider()
 
-# --- KHU VỰC HIỂN THỊ CHỈ SỐ (METRICS) ---
+# --- KHU VỰC HIỂN THỊ CHỈ SỐ ---
 q_text, correct_ans, options, current_level = st.session_state.current_data
 
 col1, col2, col3 = st.columns(3)
-col1.metric("🏆 Điểm",
-
-vel}")
-col3.metric("Kỷ lục", st.session_state.high_score)
+col1.metric("🏆 Điểm", st.session_state.score)
+col2.metric("⭐ Cấp độ", f"Lv. {current_level}")
+col3.metric("🥇 Kỷ lục", st.session_state.high_score)
 
 st.divider()
 
 if not st.session_state.game_over:
-  st.subheader(q_text)
+  st.markdown("### 💡 Câu hỏi:")
+  st.info(q_text)
 
-  # Thời gian giới hạn giảm dần theo cấp độ (Lv1: 20s, Lv5: 10s)
-  time_limit = max(10, 22 - (current_level * 2))
-  st.info(f"⏱️ Thời gian suy nghĩ cho câu này: khoảng {time_limit} giây.")
-
-  # Form chọn đáp án
   with st.form(key="quiz_form"):
-    user_choice = st.radio("Chọn đáp án đúng:", options)
-    submit = st.form_submit_button("Nộp bài")
+    user_choice = st.radio("Chọn đáp án chính xác nhất:", options)
+    st.write("")
+    submit = st.form_submit_button("🚀 Nộp Bài")
 
   if submit:
+    elapsed_time = int(time.time() - st.session_state.start_time)
+
     if user_choice == correct_ans:
       bonus_points = 10 * current_level
       st.success(
-          f"🎉 Chính xác! Bạn nhận được +{bonus_points} điểm (Thưởng cấp"
-          f" độ)."
+          f"🎉 Chính xác! (+{bonus_points} điểm) — ⏱️ Thời gian suy nghĩ:"
+          f" {elapsed_time} giây"
       )
       st.session_state.score += bonus_points
       if st.session_state.score > st.session_state.high_score:
         st.session_state.high_score = st.session_state.score
 
-      # Tạo câu hỏi mới với điểm số đã tăng
+      st.session_state.start_time = time.time()
       st.session_state.current_data = generate_question(st.session_state.score)
-      time.sleep(1)
+      time.sleep(1.2)
       st.rerun()
     else:
-      st.error(f"❌ Sai rồi! Đáp án đúng là: **{correct_ans}**")
+      st.error(
+          f"❌ Sai rồi! Đáp án đúng là: **{correct_ans}** (Bạn dùng hết"
+          f" {elapsed_time} giây)"
+      )
       st.session_state.game_over = True
 
 else:
-  st.warning("🎮 Game Over! Bạn đã chọn sai đáp án.")
-  st.write(f"Tổng số điểm bạn đạt được là: **{st.session_state.score} điểm**")
-  if st.button("Chơi lại từ đầu"):
+  st.warning("🎮 **Trò chơi kết thúc!**")
+  st.markdown(f"Tổng số điểm bạn đạt được: **{st.session_state.score} điểm**")
+
+  if st.button("🔄 Chơi Lại Từ Đầu"):
     st.session_state.score = 0
     st.session_state.game_over = False
+    st.session_state.start_time = time.time()
     st.session_state.current_data = generate_question(st.session_state.score)
     st.rerun()
+
